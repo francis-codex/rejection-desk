@@ -1,0 +1,15 @@
+{
+  "name": "rejection-desk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "a rovo agent that turns app store and play store rejections into jira fix issues and a review reply",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "demo": "node scripts/demo.js"
+  },
+  "dependencies": {
+    "@forge/api": "^6.0.0"
+  }
+}

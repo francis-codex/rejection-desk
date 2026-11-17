@@ -1,0 +1,99 @@
+modules:
+  rovo:agent:
+    - key: rejection-desk
+      name: rejection desk
+      description: reads app store, google play and solana dapp store rejections, explains them in plain english, opens a jira fix ticket with a checklist and drafts the reply to the reviewer.
+      prompt: |
+        you are rejection desk, an agent for mobile teams whose app was rejected by a store.
+        when the user pastes a rejection:
+        1. call parse-rejection with the full text. tell the user, in three short lines: which store, which rule, what it means.
+        2. show the fix checklist as a numbered list.
+        3. ask which jira project the fix ticket should go in, unless the user already said, or you are in a jira project context. then call create-fix-issue and give the issue key.
+        4. offer to draft the reply. ask only for the facts the template needs (for example the demo account username, never a password). call draft-reply with those facts as "key=value; key=value".
+           show the reply and list any [placeholders] still open.
+        rules:
+        - never invent facts about the app, licences or accounts. leave placeholders open.
+        - never ask for or repeat passwords, api keys or personal data. tell the user to put credentials straight into the store console.
+        - if no rule matched, say so and suggest the user read the rejection with the team. do not guess a guideline number.
+        - keep answers short and lowercase except proper names and the reply text itself.
+      conversationStarters:
+        - my ios build got rejected, here's the message
+        - google play says login credentials are missing
+        - turn this rejection into a jira ticket
+      actions:
+        - parse-rejection
+        - create-fix-issue
+        - draft-reply
+
+  action:
+    - key: parse-rejection
+      name: read a store rejection
+      function: parse-fn
+      actionVerb: GET
+      description: |
+        reads the text of an app store, google play or solana dapp store rejection and returns the store,
+        the rule that was broken, what it means, a fix checklist and submission details.
+      inputs:
+        rejectionText:
+          title: rejection text
+          type: string
+          required: true
+          description: the full rejection message as pasted by the user
+    - key: create-fix-issue
+      name: open a jira fix ticket
+      function: issue-fn
+      actionVerb: CREATE
+      description: |
+        creates a jira issue for a store rejection, with the plain-english meaning, a fix checklist and the original text.
+      inputs:
+        rejectionText:
+          title: rejection text
+          type: string
+          required: true
+          description: the full rejection message
+        projectKey:
+          title: jira project key
+          type: string
+          required: false
+          description: the key of the jira project to create the issue in, for example MOB
+        issueType:
+          title: issue type
+          type: string
+          required: false
+          description: jira issue type name, defaults to Task
+    - key: draft-reply
+      name: draft the reviewer reply
+      function: reply-fn
+      actionVerb: GET
+      description: |
+        drafts a reply to the store reviewer for this rejection. unknown facts stay as [placeholders].
+      inputs:
+        rejectionText:
+          title: rejection text
+          type: string
+          required: true
+          description: the full rejection message
+        facts:
+          title: facts
+          type: string
+          required: false
+          description: known facts as key=value pairs separated by semicolons, for example "demo_user=review@example.com; build=57". never passwords.
+
+  function:
+    - key: parse-fn
+      handler: index.parseRejectionAction
+    - key: issue-fn
+      handler: index.createFixIssueAction
+    - key: reply-fn
+      handler: index.draftReplyAction
+
+app:
+  runtime:
+    name: nodejs22.x
+  # `forge register` writes the real app id here
+  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work

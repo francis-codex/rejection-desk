@@ -1,0 +1,7 @@
+Google Play Console · Policy status
+Issue found: App access - couldn't sign in
+Version code: 44
+Date: 2 October 2026
+
+We couldn't sign in to your app with the details provided. The sign-in screen asked for a biometric
+check with no other option. Please give reviewers a way in that does not need a fingerprint or a one-time code.

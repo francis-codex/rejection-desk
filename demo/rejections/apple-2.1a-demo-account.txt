@@ -1,0 +1,12 @@
+App Store Connect · Resolution Center
+Submission ID: 5d3160fd-redacted
+Review date: 8 October 2026
+Version: 1.0.3 (build 44)
+Reviewed on: iPhone 17 Pro, iOS 26.1
+
+Guideline 2.1(a) - Performance - App Completeness
+
+We were unable to sign in to the app to review its features. The app requires a passkey or device PIN
+and no demo account was provided in App Review Information.
+
+Next steps: provide a demo account with full access, or explain how a reviewer can reach every feature.
