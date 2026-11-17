@@ -1,0 +1,7 @@
+Solana dApp Store · Publisher portal
+Release review: rejected
+Date: 25 September 2026
+
+LEG-001 Publisher website needs attention
+The publisher website on file did not load or did not identify the publisher. Update the website
+and submit a new release.

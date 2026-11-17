@@ -1,0 +1,13 @@
+App Store Connect · Resolution Center
+Submission ID: da51ba2c-redacted
+Review date: 30 September 2026
+Version: 1.0.2 (build 41)
+
+Guideline 2.1 - Information Needed
+
+We need additional information before we can continue the review.
+1. Who are the users of the app, and in which countries is it offered?
+2. Does the app let users convert digital assets to local currency? If so, which partner handles it?
+3. Please provide a screen recording, captured on a physical device, of the full sign-up and payout flow.
+
+Once we receive this information we will continue the review.
