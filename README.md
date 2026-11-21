@@ -2,6 +2,8 @@
 
 a rovo agent for jira that turns an app store, google play or solana dapp store rejection into work.
 
+**try it without jira: https://rejection-desk.vercel.app** (paste a rejection or pick one of 5 real ones, runs in your browser, same parse / issue / reply code as the agent).
+
 paste the rejection. the agent tells you which rule you broke and what it means in plain english, opens a jira ticket with a fix checklist, and drafts the reply to the reviewer. anything it doesn't know stays as a `[placeholder]`, so nobody sends a reviewer a guess.
 
 built from real rejections of a live wallet app across all three stores (redacted samples in `demo/rejections/`).
@@ -43,3 +45,7 @@ the agent never asks for passwords. demo account passwords go straight into the 
 ## license
 
 mit
+
+## try page
+
+`npm run web` builds `web-dist/` (the page, the pure `src` modules, the demo rejections). deployed as a static vercel site: `cd web-dist && vercel deploy --prod`.
