@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rejection desk · try it</title>
+<meta name="description" content="paste an app store or google play rejection. get the rule, a fix checklist, the jira issue and the reviewer reply.">
+<style>
+  :root { --bg:#f7f6f2; --ink:#1b1b1b; --mute:#6b6b6b; --line:#e2e0d8; --card:#fff; --acc:#0b5cff; --ok:#1f7a4d; --warn:#a15c00; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1080px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:26px; margin:0 0 4px; letter-spacing:-.01em; }
+  .sub { color:var(--mute); margin:0 0 24px; max-width:68ch; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  label { font-size:13px; color:var(--mute); display:block; margin:12px 0 6px; }
+  textarea, input { width:100%; font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; border:1px solid var(--line); border-radius:8px; padding:10px; background:#fcfcfa; color:var(--ink); }
+  textarea { min-height:280px; resize:vertical; }
+  .samples { display:flex; flex-wrap:wrap; gap:6px; }
+  button { font:inherit; font-size:13px; border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 11px; cursor:pointer; }
+  button:hover { border-color:var(--ink); }
+  button.primary { background:var(--ink); color:#fff; border-color:var(--ink); padding:8px 16px; margin-top:12px; }
+  h2 { font-size:13px; text-transform:lowercase; color:var(--mute); font-weight:600; margin:18px 0 6px; letter-spacing:.02em; }
+  h2:first-child { margin-top:0; }
+  .rule { font-size:18px; font-weight:600; }
+  .pill { display:inline-block; font-size:12px; border-radius:999px; padding:1px 8px; background:#eef3ff; color:var(--acc); margin-right:4px; }
+  .pill.blocker { background:#fff2e5; color:var(--warn); }
+  ol, ul { margin:4px 0; padding-left:20px; }
+  .jira { border:1px solid var(--line); border-radius:8px; padding:12px; background:#fcfcfa; font-size:14px; }
+  .jira h3 { font-size:13px; margin:12px 0 4px; }
+  .jira pre { white-space:pre-wrap; font-size:12px; background:#f1f0ea; padding:8px; border-radius:6px; max-height:160px; overflow:auto; }
+  .reply { white-space:pre-wrap; font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background:#fcfcfa; border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .ph { background:#fff2e5; color:var(--warn); border-radius:3px; padding:0 2px; }
+  .err { color:#b00020; }
+  .empty { color:var(--mute); }
+  footer { margin-top:28px; color:var(--mute); font-size:13px; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<main>
+  <h1>rejection desk</h1>
+  <p class="sub">paste an app store, google play or solana dapp store rejection. you get the rule it broke, a fix checklist, the jira issue the rovo agent would file, and a reply for the reviewer. runs in your browser, nothing is sent anywhere.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>1. the rejection</h2>
+      <div class="samples" id="samples"></div>
+      <label for="text">rejection text</label>
+      <textarea id="text" placeholder="paste the resolution center or play console message here"></textarea>
+      <label for="facts">what you know (optional, fills the reply): key=value; key=value</label>
+      <input id="facts" value="demo_user=reviewer@example.com; build=57">
+      <button class="primary" id="go">read it</button>
+    </section>
+
+    <section class="card" id="out"><p class="empty">pick a sample or paste a rejection, then "read it".</p></section>
+  </div>
+
+  <footer>
+    the same parse, issue and reply code runs inside the rovo agent on jira (forge). source: <a href="https://github.com/seedless-labs/rejection-desk">github.com/seedless-labs/rejection-desk</a>
+  </footer>
+</main>
+
+<script type="module">
+  import { parseRejection } from "./src/parse.js";
+  import { buildIssue } from "./src/issue.js";
+  import { draftReply } from "./src/reply.js";
+  import { SAMPLES } from "./samples.js";
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+  // jira's description is atlassian document format; draw the parts we use.
+  function adf(n) {
+    const kids = () => (n.content || []).map(adf).join("");
+    switch (n.type) {
+      case "doc": return kids();
+      case "text": return n.marks?.some((m) => m.type === "strong") ? `<b>${esc(n.text)}</b>` : esc(n.text);
+      case "paragraph": return `<p>${kids()}</p>`;
+      case "heading": return `<h3>${kids()}</h3>`;
+      case "taskList": return `<ul style="list-style:none;padding-left:4px">${kids()}</ul>`;
+      case "taskItem": return `<li>☐ ${kids()}</li>`;
+      case "bulletList": return `<ul>${kids()}</ul>`;
+      case "listItem": return `<li>${kids()}</li>`;
+      case "codeBlock": return `<pre>${kids()}</pre>`;
+      default: return kids();
+    }
+  }
+
+  function run() {
+    const raw = $("text").value;
+    try {
+      const p = parseRejection(raw);
+      const issue = buildIssue(p, raw, "MOB").fields;
+      const { reply, missing } = draftReply(p, $("facts").value);
+      const g = p.primary;
+      $("out").innerHTML = `
+        <h2>2. what it means</h2>
+        <div class="rule">${g ? esc(`${g.code} · ${g.title}`) : "no known rule matched"}</div>
+        <div><span class="pill">${esc(p.store)}</span>${g ? `<span class="pill ${g.severity === "blocker" ? "blocker" : ""}">${esc(g.severity)}</span>` : ""}</div>
+        ${g ? `<p>${esc(g.meaning)}</p><h2>fix checklist</h2><ol>${g.fixes.map((f) => `<li>${esc(f)}</li>`).join("")}</ol>` : ""}
+        <h2>3. the jira issue rovo files</h2>
+        <div class="jira"><b>${esc(issue.summary)}</b><div>${issue.labels.map((l) => `<span class="pill">${esc(l)}</span>`).join("")}</div>${adf(issue.description)}</div>
+        <h2>4. reply for the reviewer</h2>
+        <div class="reply">${esc(reply).replace(/\[(\w+)\]/g, '<span class="ph">[$1]</span>')}</div>
+        ${missing.length ? `<p class="empty">fill before sending: ${missing.map(esc).join(", ")}</p>` : ""}
+        <button id="copy">copy reply</button>`;
+      $("copy").onclick = () => navigator.clipboard.writeText(reply).then(() => ($("copy").textContent = "copied"));
+    } catch (e) {
+      $("out").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    }
+  }
+
+  for (const s of SAMPLES) {
+    const b = document.createElement("button");
+    b.textContent = s.label;
+    b.onclick = () => { $("text").value = s.text; run(); };
+    $("samples").append(b);
+  }
+  $("go").onclick = run;
+  $("text").value = SAMPLES[0].text;
+  run();
+</script>
+</body>
+</html>
